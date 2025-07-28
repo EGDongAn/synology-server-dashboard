@@ -83,29 +83,5 @@
   },
   "prisma": {
     "seed": "ts-node prisma/seed.ts"
-  },
-  "jest": {
-    "preset": "ts-jest",
-    "testEnvironment": "node",
-    "testMatch": [
-      "**/__tests__/**/*.ts",
-      "**/tests/**/*.ts",
-      "**/?(*.)+(spec|test).ts"
-    ],
-    "collectCoverageFrom": [
-      "src/**/*.ts",
-      "!src/**/*.d.ts",
-      "!src/tests/**/*",
-      "!src/scripts/**/*"
-    ],
-    "coverageDirectory": "coverage",
-    "coverageReporters": [
-      "text",
-      "lcov",
-      "html"
-    ],
-    "setupFilesAfterEnv": [
-      "<rootDir>/src/tests/setup.ts"
-    ]
   }
 }
