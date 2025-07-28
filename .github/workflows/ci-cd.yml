@@ -57,11 +57,18 @@ jobs:
     - name: Setup test environment
       working-directory: ./backend
       run: |
-        cp .env.example .env.test
+        if [ -f .env.example ]; then
+          cp .env.example .env.test
+        else
+          touch .env.test
+        fi
         echo "DATABASE_URL=postgresql://postgres:postgres@localhost:5432/synology_dashboard_test" >> .env.test
         echo "REDIS_HOST=localhost" >> .env.test
         echo "REDIS_PORT=6379" >> .env.test
         echo "NODE_ENV=test" >> .env.test
+        echo "JWT_SECRET=test-jwt-secret-key-for-testing-only" >> .env.test
+        echo "JWT_REFRESH_SECRET=test-refresh-secret-key-for-testing-only" >> .env.test
+        echo "ENCRYPTION_KEY=0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef" >> .env.test
 
     - name: Run database migrations
       working-directory: ./backend
