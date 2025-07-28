@@ -80,17 +80,35 @@ A comprehensive web-based dashboard for managing multiple Synology servers with 
 - Redis 6+
 - Docker (optional)
 
-### With Docker Compose
+### 🐳 Docker Installation Options
+
+#### Option 1: Synology NAS Ubuntu VM (Recommended)
 ```bash
-git clone <repository-url>
-cd server-dashboard
+# Quick install on Ubuntu VM
+curl -fsSL https://raw.githubusercontent.com/EGDongAn/synology-server-dashboard/master/quick-install-vm.sh | bash
+```
+
+#### Option 2: Standard Docker Compose
+```bash
+git clone https://github.com/EGDongAn/synology-server-dashboard.git
+cd synology-server-dashboard
 cp .env.example .env
+# Edit .env with your settings
 docker-compose up -d
 ```
 
-Access at:
-- Frontend: http://localhost
-- Backend API: http://localhost:3003
+#### Option 3: Synology NAS Direct
+```bash
+git clone https://github.com/EGDongAn/synology-server-dashboard.git
+cd synology-server-dashboard
+./install-synology.sh
+```
+
+### 🌐 Access Points
+- **Web UI**: http://your-vm-ip:8080
+- **API**: http://your-vm-ip:3001
+- **Database**: localhost:5433
+- **Redis**: localhost:6381
 
 **Default Login:**
 - Email: admin@example.com
