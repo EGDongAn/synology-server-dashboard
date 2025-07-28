@@ -1,0 +1,75 @@
+version: '3.8'
+
+services:
+  postgres:
+    image: postgres:15-alpine
+    container_name: synology-dashboard-db
+    environment:
+      POSTGRES_USER: dashboard
+      POSTGRES_PASSWORD: ${DB_PASSWORD:-dashboard123}
+      POSTGRES_DB: synology_dashboard
+      PGDATA: /var/lib/postgresql/data/pgdata
+    volumes:
+      - ./data/postgres:/var/lib/postgresql/data
+    ports:
+      - "5433:5432"
+    restart: unless-stopped
+    networks:
+      - dashboard-network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U dashboard"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  redis:
+    image: redis:7-alpine
+    container_name: synology-dashboard-redis
+    command: redis-server --appendonly yes ${REDIS_PASSWORD:+--requirepass $REDIS_PASSWORD}
+    volumes:
+      - ./data/redis:/data
+    ports:
+      - "6381:6379"
+    restart: unless-stopped
+    networks:
+      - dashboard-network
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  # Simple demo backend - replace with actual backend when ready
+  demo-backend:
+    image: nginx:alpine
+    container_name: synology-dashboard-demo
+    volumes:
+      - ./demo/index.html:/usr/share/nginx/html/index.html:ro
+      - ./demo/api.json:/usr/share/nginx/html/api/status:ro
+    ports:
+      - "3001:80"
+    restart: unless-stopped
+    networks:
+      - dashboard-network
+    depends_on:
+      - postgres
+      - redis
+
+  # Nginx reverse proxy
+  nginx:
+    image: nginx:alpine
+    container_name: synology-dashboard-nginx
+    volumes:
+      - ./nginx/demo.conf:/etc/nginx/conf.d/default.conf:ro
+      - ./data/nginx-logs:/var/log/nginx
+    ports:
+      - "8080:80"
+    restart: unless-stopped
+    networks:
+      - dashboard-network
+    depends_on:
+      - demo-backend
+
+networks:
+  dashboard-network:
+    driver: bridge

@@ -1,0 +1,176 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Synology Server Dashboard - Demo</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .container {
+            background: white;
+            padding: 3rem;
+            border-radius: 20px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+            text-align: center;
+            max-width: 600px;
+            margin: 2rem;
+        }
+        
+        .logo {
+            font-size: 3rem;
+            margin-bottom: 1rem;
+        }
+        
+        h1 {
+            color: #333;
+            margin-bottom: 1rem;
+            font-size: 2.5rem;
+        }
+        
+        .subtitle {
+            color: #666;
+            margin-bottom: 2rem;
+            font-size: 1.2rem;
+        }
+        
+        .status {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1rem;
+            margin: 2rem 0;
+        }
+        
+        .status-card {
+            background: #f8f9fa;
+            padding: 1.5rem;
+            border-radius: 10px;
+            border-left: 4px solid #28a745;
+        }
+        
+        .status-card.warning {
+            border-left-color: #ffc107;
+        }
+        
+        .status-card h3 {
+            color: #333;
+            margin-bottom: 0.5rem;
+        }
+        
+        .status-card p {
+            color: #666;
+            font-size: 0.9rem;
+        }
+        
+        .actions {
+            margin-top: 2rem;
+        }
+        
+        .btn {
+            display: inline-block;
+            background: #667eea;
+            color: white;
+            padding: 12px 24px;
+            border-radius: 8px;
+            text-decoration: none;
+            margin: 0 10px;
+            transition: background 0.3s;
+        }
+        
+        .btn:hover {
+            background: #5a6fd8;
+        }
+        
+        .info {
+            background: #e3f2fd;
+            padding: 1rem;
+            border-radius: 8px;
+            margin-top: 2rem;
+            color: #1976d2;
+        }
+        
+        .footer {
+            margin-top: 2rem;
+            padding-top: 2rem;
+            border-top: 1px solid #eee;
+            color: #999;
+            font-size: 0.9rem;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="logo">🚀</div>
+        <h1>Synology Server Dashboard</h1>
+        <p class="subtitle">서버 관리 대시보드가 성공적으로 설치되었습니다!</p>
+        
+        <div class="status">
+            <div class="status-card">
+                <h3>✅ Database</h3>
+                <p>PostgreSQL 연결됨</p>
+            </div>
+            <div class="status-card">
+                <h3>✅ Cache</h3>
+                <p>Redis 연결됨</p>
+            </div>
+            <div class="status-card warning">
+                <h3>⚠️ Backend</h3>
+                <p>개발 중</p>
+            </div>
+            <div class="status-card warning">
+                <h3>⚠️ Frontend</h3>
+                <p>개발 중</p>
+            </div>
+        </div>
+        
+        <div class="info">
+            <strong>📋 현재 상태:</strong><br>
+            기본 인프라 (PostgreSQL, Redis)가 실행 중입니다.<br>
+            백엔드와 프론트엔드는 GitHub Actions 빌드 완료 후 사용 가능합니다.
+        </div>
+        
+        <div class="actions">
+            <a href="#" class="btn" onclick="checkStatus()">상태 확인</a>
+            <a href="/api/status" class="btn" target="_blank">API 테스트</a>
+        </div>
+        
+        <div class="footer">
+            <p>🔧 관리 명령어:</p>
+            <p><code>./stop.sh</code> - 서비스 중지</p>
+            <p><code>./update.sh</code> - 업데이트</p>
+            <p><code>docker-compose logs</code> - 로그 확인</p>
+        </div>
+    </div>
+    
+    <script>
+        function checkStatus() {
+            fetch('/api/status')
+                .then(response => response.json())
+                .then(data => {
+                    alert('서비스 상태: ' + JSON.stringify(data, null, 2));
+                })
+                .catch(err => {
+                    alert('백엔드 서비스가 아직 준비되지 않았습니다.');
+                });
+        }
+        
+        // Auto refresh every 30 seconds
+        setTimeout(() => {
+            location.reload();
+        }, 30000);
+    </script>
+</body>
+</html>

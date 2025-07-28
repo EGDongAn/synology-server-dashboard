@@ -33,13 +33,13 @@ JWT_SECRET=$(openssl rand -base64 64 | tr -d "=+/" | cut -c1-64)
 JWT_REFRESH_SECRET=$(openssl rand -base64 64 | tr -d "=+/" | cut -c1-64)
 ENCRYPTION_KEY=$(openssl rand -hex 32)
 
-# Update .env file
-sed -i "s/SYNOLOGY_IP=.*/VM_IP=$VM_IP/" .env
-sed -i "s/DB_PASSWORD=.*/DB_PASSWORD=$DB_PASSWORD/" .env
-sed -i "s/REDIS_PASSWORD=.*/REDIS_PASSWORD=$REDIS_PASSWORD/" .env
-sed -i "s/JWT_SECRET=.*/JWT_SECRET=$JWT_SECRET/" .env
-sed -i "s/JWT_REFRESH_SECRET=.*/JWT_REFRESH_SECRET=$JWT_REFRESH_SECRET/" .env
-sed -i "s/ENCRYPTION_KEY=.*/ENCRYPTION_KEY=$ENCRYPTION_KEY/" .env
+# Update .env file with proper escaping
+sed -i "s|SYNOLOGY_IP=.*|VM_IP=$VM_IP|" .env
+sed -i "s|DB_PASSWORD=.*|DB_PASSWORD=$DB_PASSWORD|" .env
+sed -i "s|REDIS_PASSWORD=.*|REDIS_PASSWORD=$REDIS_PASSWORD|" .env
+sed -i "s|JWT_SECRET=.*|JWT_SECRET=$JWT_SECRET|" .env
+sed -i "s|JWT_REFRESH_SECRET=.*|JWT_REFRESH_SECRET=$JWT_REFRESH_SECRET|" .env
+sed -i "s|ENCRYPTION_KEY=.*|ENCRYPTION_KEY=$ENCRYPTION_KEY|" .env
 
 # Create management scripts
 cat > start.sh << 'EOF'

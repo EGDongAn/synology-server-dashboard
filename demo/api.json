@@ -1,0 +1,12 @@
+{
+  "status": "demo",
+  "message": "Synology Server Dashboard Demo",
+  "services": {
+    "database": "connected",
+    "redis": "connected",
+    "backend": "building",
+    "frontend": "building"
+  },
+  "timestamp": "2025-07-28T22:00:00Z",
+  "version": "1.0.0-demo"
+}
