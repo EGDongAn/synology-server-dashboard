@@ -10,8 +10,8 @@ RUN apk add --no-cache curl
 COPY package*.json ./
 COPY prisma ./prisma/
 
-# Install dependencies
-RUN npm ci --omit=dev
+# Install all dependencies (including dev dependencies for building)
+RUN npm ci
 
 # Generate Prisma client
 RUN npx prisma generate
@@ -22,6 +22,9 @@ COPY tsconfig.json ./
 
 # Build the application
 RUN npm run build
+
+# Remove dev dependencies to reduce image size
+RUN npm ci --omit=dev && npm cache clean --force
 
 # Create non-root user
 RUN addgroup -g 1001 -S nodejs
