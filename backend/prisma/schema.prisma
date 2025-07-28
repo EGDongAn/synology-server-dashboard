@@ -1,0 +1,334 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// User model for authentication
+model User {
+  id             String       @id @default(uuid())
+  email          String       @unique
+  password       String
+  name           String
+  role           UserRole     @default(OPERATOR)
+  refreshToken   String?      @db.Text
+  createdAt      DateTime     @default(now())
+  updatedAt      DateTime     @updatedAt
+  
+  deployments    Deployment[]
+  auditLogs      AuditLog[]
+  
+  @@index([email])
+}
+
+enum UserRole {
+  ADMIN
+  OPERATOR
+  VIEWER
+}
+
+// Server model
+model Server {
+  id             String       @id @default(uuid())
+  name           String
+  description    String?
+  ipAddress      String
+  sshPort        Int          @default(22)
+  dockerPort     Int?
+  username       String
+  password       String?      @db.Text // Encrypted
+  privateKey     String?      @db.Text // Encrypted
+  status         ServerStatus @default(OFFLINE)
+  cpuUsage       Float        @default(0)
+  memoryUsage    Float        @default(0)
+  diskUsage      Float        @default(0)
+  tags           String[]
+  createdAt      DateTime     @default(now())
+  updatedAt      DateTime     @updatedAt
+  
+  services       Service[]
+  deployments    Deployment[]
+  serverGroups   ServerGroupMember[]
+  alerts         Alert[]
+  metrics        ServerMetric[]
+  
+  @@index([status])
+  @@index([ipAddress])
+}
+
+enum ServerStatus {
+  ONLINE
+  OFFLINE
+  ERROR
+}
+
+// Server Group model
+model ServerGroup {
+  id             String       @id @default(uuid())
+  name           String       @unique
+  description    String?
+  type           GroupType
+  createdAt      DateTime     @default(now())
+  updatedAt      DateTime     @updatedAt
+  
+  members        ServerGroupMember[]
+}
+
+enum GroupType {
+  ENVIRONMENT  // dev, staging, production
+  PURPOSE      // web, db, file
+  CUSTOM
+}
+
+model ServerGroupMember {
+  id             String       @id @default(uuid())
+  serverId       String
+  groupId        String
+  createdAt      DateTime     @default(now())
+  
+  server         Server       @relation(fields: [serverId], references: [id], onDelete: Cascade)
+  group          ServerGroup  @relation(fields: [groupId], references: [id], onDelete: Cascade)
+  
+  @@unique([serverId, groupId])
+}
+
+// Service model
+model Service {
+  id             String       @id @default(uuid())
+  name           String
+  description    String?
+  serverId       String
+  type           ServiceType
+  status         ServiceStatus @default(STOPPED)
+  config         Json         // Stores ports, env vars, volumes, etc.
+  healthCheckUrl String?
+  healthCheckInterval Int?     // in seconds
+  createdAt      DateTime     @default(now())
+  updatedAt      DateTime     @updatedAt
+  
+  server         Server       @relation(fields: [serverId], references: [id], onDelete: Cascade)
+  deployments    Deployment[]
+  alerts         Alert[]
+  healthChecks   HealthCheck[]
+  serviceLogs    ServiceLog[]
+  
+  @@index([status])
+  @@index([serverId])
+}
+
+enum ServiceType {
+  DOCKER
+  SYSTEMD
+  CUSTOM
+}
+
+enum ServiceStatus {
+  RUNNING
+  STOPPED
+  ERROR
+}
+
+// Deployment model
+model Deployment {
+  id             String       @id @default(uuid())
+  name           String
+  serviceId      String
+  serverId       String
+  userId         String
+  status         DeploymentStatus @default(PENDING)
+  config         Json         // Deployment configuration
+  logs           Json[]       // Array of log entries
+  startedAt      DateTime     @default(now())
+  completedAt    DateTime?
+  
+  service        Service      @relation(fields: [serviceId], references: [id], onDelete: Cascade)
+  server         Server       @relation(fields: [serverId], references: [id], onDelete: Cascade)
+  user           User         @relation(fields: [userId], references: [id])
+  
+  @@index([status])
+  @@index([serviceId])
+  @@index([serverId])
+}
+
+enum DeploymentStatus {
+  PENDING
+  VALIDATING
+  PULLING
+  CREATING
+  HEALTH_CHECKING
+  COMPLETED
+  FAILED
+  ROLLED_BACK
+}
+
+// Deployment Template model
+model DeploymentTemplate {
+  id             String       @id @default(uuid())
+  name           String       @unique
+  description    String?
+  type           ServiceType
+  config         Json         // Template configuration
+  tags           String[]
+  createdAt      DateTime     @default(now())
+  updatedAt      DateTime     @updatedAt
+  
+  @@index([name])
+}
+
+// Alert model
+model Alert {
+  id             String       @id @default(uuid())
+  serverId       String?
+  serviceId      String?
+  type           AlertType
+  severity       AlertSeverity
+  title          String
+  message        String       @db.Text
+  status         AlertStatus  @default(ACTIVE)
+  channels       String[]     // email, slack, webhook
+  createdAt      DateTime     @default(now())
+  acknowledgedAt DateTime?
+  resolvedAt     DateTime?
+  
+  server         Server?      @relation(fields: [serverId], references: [id], onDelete: Cascade)
+  service        Service?     @relation(fields: [serviceId], references: [id], onDelete: Cascade)
+  notifications  Notification[]
+  
+  @@index([status])
+  @@index([severity])
+}
+
+enum AlertType {
+  SERVER_DOWN
+  SERVICE_DOWN
+  HIGH_CPU
+  HIGH_MEMORY
+  HIGH_DISK
+  DEPLOYMENT_FAILED
+  HEALTH_CHECK_FAILED
+  CUSTOM
+}
+
+enum AlertSeverity {
+  CRITICAL
+  HIGH
+  MEDIUM
+  LOW
+}
+
+enum AlertStatus {
+  ACTIVE
+  ACKNOWLEDGED
+  RESOLVED
+}
+
+// Notification model
+model Notification {
+  id             String       @id @default(uuid())
+  alertId        String
+  channel        String       // email, slack, webhook
+  status         NotificationStatus @default(PENDING)
+  sentAt         DateTime?
+  error          String?
+  attempts       Int          @default(0)
+  createdAt      DateTime     @default(now())
+  
+  alert          Alert        @relation(fields: [alertId], references: [id], onDelete: Cascade)
+  
+  @@index([status])
+}
+
+enum NotificationStatus {
+  PENDING
+  SENT
+  FAILED
+}
+
+// Health Check model
+model HealthCheck {
+  id             String       @id @default(uuid())
+  serviceId      String
+  status         HealthStatus
+  responseTime   Int?         // in milliseconds
+  statusCode     Int?
+  error          String?
+  checkedAt      DateTime     @default(now())
+  
+  service        Service      @relation(fields: [serviceId], references: [id], onDelete: Cascade)
+  
+  @@index([serviceId, checkedAt])
+}
+
+enum HealthStatus {
+  HEALTHY
+  UNHEALTHY
+  UNKNOWN
+}
+
+// Service Log model
+model ServiceLog {
+  id             String       @id @default(uuid())
+  serviceId      String
+  level          LogLevel
+  message        String       @db.Text
+  metadata       Json?
+  timestamp      DateTime     @default(now())
+  
+  service        Service      @relation(fields: [serviceId], references: [id], onDelete: Cascade)
+  
+  @@index([serviceId, timestamp])
+}
+
+enum LogLevel {
+  DEBUG
+  INFO
+  WARN
+  ERROR
+}
+
+// Server Metric model (time-series data)
+model ServerMetric {
+  id             String       @id @default(uuid())
+  serverId       String
+  cpuUsage       Float
+  memoryUsage    Float
+  diskUsage      Float
+  networkIn      BigInt?
+  networkOut     BigInt?
+  timestamp      DateTime     @default(now())
+  
+  server         Server       @relation(fields: [serverId], references: [id], onDelete: Cascade)
+  
+  @@index([serverId, timestamp])
+}
+
+// Audit Log model
+model AuditLog {
+  id             String       @id @default(uuid())
+  userId         String
+  action         String
+  resource       String
+  resourceId     String?
+  changes        Json?
+  ipAddress      String?
+  userAgent      String?
+  result         AuditResult
+  timestamp      DateTime     @default(now())
+  
+  user           User         @relation(fields: [userId], references: [id])
+  
+  @@index([userId])
+  @@index([resource])
+  @@index([timestamp])
+}
+
+enum AuditResult {
+  SUCCESS
+  FAILURE
+}

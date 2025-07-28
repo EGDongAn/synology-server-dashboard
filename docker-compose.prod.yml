@@ -1,0 +1,68 @@
+version: '3.9'
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: synology-dashboard-db-prod
+    environment:
+      POSTGRES_USER: dashboard
+      POSTGRES_PASSWORD: dashboard123
+      POSTGRES_DB: synology_dashboard
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    ports:
+      - "5433:5432"
+    restart: unless-stopped
+    networks:
+      - synology-network
+
+  redis:
+    image: redis:7-alpine
+    container_name: synology-dashboard-redis-prod
+    command: redis-server --appendonly yes
+    ports:
+      - "6381:6379"
+    volumes:
+      - redis_data:/data
+    restart: unless-stopped
+    networks:
+      - synology-network
+
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile.prod
+    container_name: synology-dashboard-prod
+    depends_on:
+      - postgres
+      - redis
+    environment:
+      NODE_ENV: production
+      PORT: 3003
+    ports:
+      - "3003:3003"
+    restart: unless-stopped
+    networks:
+      - synology-network
+
+  nginx:
+    image: nginx:alpine
+    container_name: synology-dashboard-nginx-prod
+    depends_on:
+      - app
+    ports:
+      - "80:80"
+    volumes:
+      - ./nginx/nginx-prod.conf:/etc/nginx/nginx.conf:ro
+      - ./frontend/dist:/usr/share/nginx/html:ro
+    restart: unless-stopped
+    networks:
+      - synology-network
+
+volumes:
+  postgres_data:
+  redis_data:
+
+networks:
+  synology-network:
+    driver: bridge

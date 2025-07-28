@@ -1,0 +1,23 @@
+# Production Dockerfile
+FROM node:20-alpine
+
+WORKDIR /app
+
+# Copy package files
+COPY backend/package*.json ./
+RUN npm ci --omit=dev
+
+# Copy built backend (our simple auth server)
+COPY backend/src/auth-server.js ./server.js
+
+# Copy built frontend
+COPY frontend/dist ./public
+
+# Copy environment file
+COPY .env.example .env
+
+# Expose port
+EXPOSE 3003
+
+# Start server  
+CMD ["node", "server.js"]
