@@ -1,0 +1,61 @@
+{
+  "name": "synology-server-dashboard",
+  "version": "1.0.0",
+  "description": "A comprehensive web-based dashboard for managing multiple Synology servers",
+  "main": "index.js",
+  "scripts": {
+    "dev": "concurrently \"npm run dev:backend\" \"npm run dev:frontend\"",
+    "dev:backend": "cd backend && npm run dev",
+    "dev:frontend": "cd frontend && npm run dev",
+    "build": "npm run build:frontend && npm run build:backend",
+    "build:backend": "cd backend && npm run build",
+    "build:frontend": "cd frontend && npm run build",
+    "start": "cd backend && npm start",
+    "test": "npm run test:backend && npm run test:frontend",
+    "test:backend": "cd backend && npm test",
+    "test:frontend": "cd frontend && npm test",
+    "docker:build": "docker build -f Dockerfile.prod -t synology-dashboard:latest .",
+    "docker:build:dev": "docker-compose build",
+    "docker:up": "docker-compose up -d",
+    "docker:up:prod": "docker-compose -f docker-compose.prod.yml up -d",
+    "docker:down": "docker-compose down",
+    "docker:down:prod": "docker-compose -f docker-compose.prod.yml down",
+    "docker:logs": "docker-compose logs -f",
+    "deploy": "npm run build && npm run docker:build && npm run docker:up:prod",
+    "clean": "rm -rf node_modules backend/node_modules frontend/node_modules backend/dist frontend/dist",
+    "setup": "npm install && cd backend && npm install && cd ../frontend && npm install",
+    "db:migrate": "cd backend && npx prisma migrate deploy",
+    "db:generate": "cd backend && npx prisma generate",
+    "db:seed": "cd backend && npx prisma db seed",
+    "lint": "npm run lint:backend && npm run lint:frontend",
+    "lint:backend": "cd backend && npm run lint",
+    "lint:frontend": "cd frontend && npm run lint"
+  },
+  "keywords": [
+    "synology",
+    "docker",
+    "dashboard",
+    "monitoring",
+    "server-management",
+    "react",
+    "nodejs",
+    "typescript"
+  ],
+  "author": "EGDongAn",
+  "license": "MIT",
+  "devDependencies": {
+    "concurrently": "^8.2.2"
+  },
+  "engines": {
+    "node": ">=18.0.0",
+    "npm": ">=9.0.0"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/EGDongAn/synology-server-dashboard.git"
+  },
+  "bugs": {
+    "url": "https://github.com/EGDongAn/synology-server-dashboard/issues"
+  },
+  "homepage": "https://github.com/EGDongAn/synology-server-dashboard#readme"
+}
