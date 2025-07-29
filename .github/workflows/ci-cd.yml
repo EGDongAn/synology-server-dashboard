@@ -6,6 +6,12 @@ on:
   pull_request:
     branches: [ master, main ]
 
+permissions:
+  contents: read
+  packages: write
+  actions: read
+  security-events: write
+
 jobs:
   test:
     runs-on: ubuntu-latest
@@ -118,8 +124,8 @@ jobs:
         file: ./backend/Dockerfile.prod
         push: true
         tags: |
-          ghcr.io/${{ steps.lower.outputs.actor_lower }}/synology-server-dashboard-backend:latest
-          ghcr.io/${{ steps.lower.outputs.actor_lower }}/synology-server-dashboard-backend:${{ github.sha }}
+          ghcr.io/${{ steps.lower.outputs.actor_lower }}/synology-backend:latest
+          ghcr.io/${{ steps.lower.outputs.actor_lower }}/synology-backend:${{ github.sha }}
         cache-from: type=gha
         cache-to: type=gha,mode=max
     
@@ -130,8 +136,8 @@ jobs:
         file: ./frontend/Dockerfile
         push: true
         tags: |
-          ghcr.io/${{ steps.lower.outputs.actor_lower }}/synology-server-dashboard-frontend:latest
-          ghcr.io/${{ steps.lower.outputs.actor_lower }}/synology-server-dashboard-frontend:${{ github.sha }}
+          ghcr.io/${{ steps.lower.outputs.actor_lower }}/synology-frontend:latest
+          ghcr.io/${{ steps.lower.outputs.actor_lower }}/synology-frontend:${{ github.sha }}
         cache-from: type=gha
         cache-to: type=gha,mode=max
 
