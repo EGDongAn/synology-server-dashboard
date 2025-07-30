@@ -2,7 +2,7 @@ import { Router } from 'express'
 import authRoutes from './auth.routes'
 import serverRoutes from './server.routes'
 import dockerRoutes from './docker.routes'
-import monitoringRoutes from './monitoring.routes'
+// import monitoringRoutes from './monitoring.routes' // Temporarily disabled
 import notificationRoutes from './notification.routes'
 import deploymentRoutes from './deployment.routes'
 
@@ -12,7 +12,7 @@ const router = Router()
 router.use('/v1/auth', authRoutes)
 router.use('/v1/servers', serverRoutes)
 router.use('/v1/docker', dockerRoutes)
-router.use('/v1/monitoring', monitoringRoutes)
+// router.use('/v1/monitoring', monitoringRoutes) // Temporarily disabled
 router.use('/v1/notifications', notificationRoutes)
 router.use('/v1/deployments', deploymentRoutes)
 
