@@ -1,10 +1,10 @@
 import { Response } from 'express'
-import { MonitoringService } from '../services/monitoring.service'
+// import { MonitoringService } from '../services/monitoring.service' // Temporarily disabled
 import { AuthenticatedRequest } from '../middleware/auth'
 import Joi from 'joi'
 import { logger } from '../index'
 
-let monitoringService: MonitoringService
+// let monitoringService: MonitoringService // Temporarily disabled
 
 // Validation schemas
 const healthCheckSchema = Joi.object({
