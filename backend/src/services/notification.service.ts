@@ -3,7 +3,7 @@ import nodemailer from 'nodemailer'
 import axios from 'axios'
 import { PrismaClient, Alert, NotificationStatus } from '@prisma/client'
 import { config } from '../config'
-import { logger } from '../index'
+// Removed circular import - using console.log instead of logger
 import Redis from 'ioredis'
 
 const prisma = new PrismaClient()
@@ -50,20 +50,20 @@ export class NotificationService {
     // Email channel
     if (config.email.host && config.email.user) {
       this.channels.set('email', new EmailChannel())
-      logger.info('Email notification channel enabled')
+      console.log('Email notification channel enabled')
     }
 
     // Slack channel
     if (config.slack.webhookUrl) {
       this.channels.set('slack', new SlackChannel())
-      logger.info('Slack notification channel enabled')
+      console.log('Slack notification channel enabled')
     }
 
     // Webhook channel (always enabled)
     this.channels.set('webhook', new WebhookChannel())
-    logger.info('Webhook notification channel enabled')
+    console.log('Webhook notification channel enabled')
 
-    logger.info(`Notification service initialized with ${this.channels.size} channels`)
+    console.log(`Notification service initialized with ${this.channels.size} channels`)
   }
 
   private setupTemplates() {
@@ -161,14 +161,14 @@ export class NotificationService {
       removeOnFail: 50
     })
 
-    logger.info(`Notification queued for alert ${alert.id}`)
+    console.log(`Notification queued for alert ${alert.id}`)
   }
 
   private processQueue() {
     this.notificationQueue.process('send', async (job) => {
       const notification = job.data as NotificationPayload
       
-      logger.info(`Processing notification ${notification.id} for alert ${notification.alertId}`)
+      console.log(`Processing notification ${notification.id} for alert ${notification.alertId}`)
 
       const results = await Promise.allSettled(
         notification.channels.map(async (channelType) => {
@@ -198,7 +198,7 @@ export class NotificationService {
               }
             })
 
-            logger.info(`Notification sent via ${channelType} for alert ${notification.alertId}`)
+            console.log(`Notification sent via ${channelType} for alert ${notification.alertId}`)
           } catch (error) {
             // Update notification as failed
             await prisma.notification.update({
@@ -210,7 +210,7 @@ export class NotificationService {
               }
             })
 
-            logger.error(`Failed to send notification via ${channelType}:`, error)
+            console.error(`Failed to send notification via ${channelType}:`, error)
             throw error
           }
         })
@@ -219,16 +219,16 @@ export class NotificationService {
       const successful = results.filter(r => r.status === 'fulfilled').length
       const failed = results.filter(r => r.status === 'rejected').length
 
-      logger.info(`Notification ${notification.id} processed: ${successful} successful, ${failed} failed`)
+      console.log(`Notification ${notification.id} processed: ${successful} successful, ${failed} failed`)
     })
 
     // Queue event handlers
     this.notificationQueue.on('completed', (job) => {
-      logger.debug(`Notification job ${job.id} completed`)
+      console.log(`Notification job ${job.id} completed`)
     })
 
     this.notificationQueue.on('failed', (job, err) => {
-      logger.error(`Notification job ${job.id} failed:`, err)
+      console.error(`Notification job ${job.id} failed:`, err)
     })
   }
 
@@ -373,17 +373,17 @@ export class NotificationService {
         await this.sendNotification(notification.alert)
         retried++
       } catch (error) {
-        logger.error(`Failed to retry notification ${notification.id}:`, error)
+        console.error(`Failed to retry notification ${notification.id}:`, error)
       }
     }
 
-    logger.info(`Retried ${retried} failed notifications`)
+    console.log(`Retried ${retried} failed notifications`)
     return retried
   }
 
   shutdown() {
     this.notificationQueue.close()
-    logger.info('Notification service shutdown')
+    console.log('Notification service shutdown')
   }
 }
 
