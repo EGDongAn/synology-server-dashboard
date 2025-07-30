@@ -2,8 +2,8 @@ import { Server } from 'socket.io'
 import { PrismaClient } from '@prisma/client'
 import { ServerService } from './server.service'
 import { DockerService } from './docker.service'
-import { logger } from '../index'
-import { CronJob } from 'cron'
+// Removed circular import - using console.log instead of logger
+// import { CronJob } from 'cron' - not needed for now
 import Redis from 'ioredis'
 
 const prisma = new PrismaClient()
@@ -40,8 +40,8 @@ export class MonitoringService {
   private redis: Redis
   private serverService: ServerService
   private dockerService: DockerService
-  private monitoringJobs = new Map<string, CronJob>()
-  private healthCheckJobs = new Map<string, CronJob>()
+  private monitoringJobs = new Map<string, NodeJS.Timeout>()
+  private healthCheckJobs = new Map<string, NodeJS.Timeout>()
 
   constructor(io: Server, redis: Redis) {
     this.io = io
@@ -55,18 +55,16 @@ export class MonitoringService {
 
   private startGlobalMonitoring() {
     // Monitor all online servers every 30 seconds
-    const globalJob = new CronJob('*/30 * * * * *', async () => {
+    const globalJob = setInterval(async () => {
       await this.monitorAllServers()
-    })
-    globalJob.start()
+    }, 30000)
 
     // Cleanup old metrics every hour
-    const cleanupJob = new CronJob('0 0 * * * *', async () => {
+    const cleanupJob = setInterval(async () => {
       await this.cleanupOldMetrics()
-    })
-    cleanupJob.start()
+    }, 3600000)
 
-    logger.info('Global monitoring started')
+    console.log('Global monitoring started')
   }
 
   async startServerMonitoring(serverId: string, interval = 30000) {
@@ -74,27 +72,25 @@ export class MonitoringService {
     this.stopServerMonitoring(serverId)
 
     const intervalSeconds = Math.floor(interval / 1000)
-    const cronPattern = `*/${intervalSeconds} * * * * *`
+    const intervalMs = intervalSeconds * 1000
 
-    const job = new CronJob(cronPattern, async () => {
+    const job = setInterval(async () => {
       try {
         await this.collectAndBroadcastMetrics(serverId)
       } catch (error) {
-        logger.error(`Monitoring error for server ${serverId}:`, error)
+        console.error(`Monitoring error for server ${serverId}:`, error)
       }
-    })
-
-    job.start()
+    }, intervalMs)
     this.monitoringJobs.set(serverId, job)
-    logger.info(`Started monitoring for server ${serverId} with ${interval}ms interval`)
+    console.log(`Started monitoring for server ${serverId} with ${interval}ms interval`)
   }
 
   stopServerMonitoring(serverId: string) {
     const job = this.monitoringJobs.get(serverId)
     if (job) {
-      job.stop()
+      clearInterval(job)
       this.monitoringJobs.delete(serverId)
-      logger.info(`Stopped monitoring for server ${serverId}`)
+      console.log(`Stopped monitoring for server ${serverId}`)
     }
   }
 
@@ -116,7 +112,7 @@ export class MonitoringService {
       
       return metrics
     } catch (error) {
-      logger.error(`Failed to collect metrics for server ${serverId}:`, error)
+      console.error(`Failed to collect metrics for server ${serverId}:`, error)
       throw error
     }
   }
@@ -182,7 +178,7 @@ export class MonitoringService {
 
       return services
     } catch (error) {
-      logger.error(`Failed to collect service metrics for server ${serverId}:`, error)
+      console.error(`Failed to collect service metrics for server ${serverId}:`, error)
       return []
     }
   }
@@ -199,7 +195,7 @@ export class MonitoringService {
         }
       })
     } catch (error) {
-      logger.error('Failed to store metrics in database:', error)
+      console.error('Failed to store metrics in database:', error)
     }
   }
 
@@ -223,7 +219,7 @@ export class MonitoringService {
       const oneDayAgo = Date.now() - (24 * 60 * 60 * 1000)
       await this.redis.zremrangebyscore(timeSeriesKey, 0, oneDayAgo)
     } catch (error) {
-      logger.error('Failed to store metrics in Redis:', error)
+      console.error('Failed to store metrics in Redis:', error)
     }
   }
 
@@ -254,7 +250,7 @@ export class MonitoringService {
       
       return null
     } catch (error) {
-      logger.error(`Failed to get latest metrics for server ${serverId}:`, error)
+      console.error(`Failed to get latest metrics for server ${serverId}:`, error)
       return null
     }
   }
@@ -272,7 +268,7 @@ export class MonitoringService {
       
       return results.map(data => JSON.parse(data))
     } catch (error) {
-      logger.error(`Failed to get metrics history for server ${serverId}:`, error)
+      console.error(`Failed to get metrics history for server ${serverId}:`, error)
       
       // Fallback to database
       const since = new Date(Date.now() - (hours * 60 * 60 * 1000))
@@ -298,28 +294,26 @@ export class MonitoringService {
     // Stop existing health check
     this.stopHealthCheck(serviceId)
 
-    const intervalSeconds = Math.floor(config.interval / 1000)
-    const cronPattern = `*/${intervalSeconds} * * * * *`
+    const intervalMs = config.interval
 
-    const job = new CronJob(cronPattern, async () => {
+    const job = setInterval(async () => {
       try {
         await this.performHealthCheck(serviceId, config)
       } catch (error) {
-        logger.error(`Health check error for service ${serviceId}:`, error)
+        console.error(`Health check error for service ${serviceId}:`, error)
       }
-    })
+    }, intervalMs)
 
-    job.start()
     this.healthCheckJobs.set(serviceId, job)
-    logger.info(`Started health check for service ${serviceId}`)
+    console.log(`Started health check for service ${serviceId}`)
   }
 
   stopHealthCheck(serviceId: string) {
     const job = this.healthCheckJobs.get(serviceId)
     if (job) {
-      job.stop()
+      clearInterval(job)
       this.healthCheckJobs.delete(serviceId)
-      logger.info(`Stopped health check for service ${serviceId}`)
+      console.log(`Stopped health check for service ${serviceId}`)
     }
   }
 
@@ -485,7 +479,7 @@ export class MonitoringService {
 
       this.io.emit('globalStats', stats)
     } catch (error) {
-      logger.error('Failed to monitor all servers:', error)
+      console.error('Failed to monitor all servers:', error)
     }
   }
 
@@ -500,9 +494,9 @@ export class MonitoringService {
         }
       })
 
-      logger.info(`Cleaned up ${deleted.count} old metrics`)
+      console.log(`Cleaned up ${deleted.count} old metrics`)
     } catch (error) {
-      logger.error('Failed to cleanup old metrics:', error)
+      console.error('Failed to cleanup old metrics:', error)
     }
   }
 
@@ -520,16 +514,16 @@ export class MonitoringService {
   shutdown() {
     // Stop all monitoring jobs
     for (const [serverId, job] of this.monitoringJobs) {
-      job.stop()
+      clearInterval(job)
     }
     this.monitoringJobs.clear()
 
     // Stop all health check jobs
     for (const [serviceId, job] of this.healthCheckJobs) {
-      job.stop()
+      clearInterval(job)
     }
     this.healthCheckJobs.clear()
 
-    logger.info('Monitoring service shutdown')
+    console.log('Monitoring service shutdown')
   }
 }
