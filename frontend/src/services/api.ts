@@ -32,10 +32,10 @@ api.interceptors.response.use(
       const refreshToken = localStorage.getItem('refreshToken')
       if (refreshToken) {
         try {
-          const response = await axios.post(`${API_URL}/auth/refresh`, {
+          const response = await axios.post(`${API_URL}/api/v1/auth/refresh`, {
             refreshToken,
           })
-          const { accessToken } = response.data
+          const { accessToken } = response.data.data
           localStorage.setItem('accessToken', accessToken)
           
           // Retry original request
