@@ -28,16 +28,22 @@ services:
     networks:
       - synology-network
 
-  app:
-    build:
-      context: .
-      dockerfile: Dockerfile.prod
-    container_name: synology-dashboard-prod
+  backend:
+    image: ghcr.io/egdongan/synology-backend:latest
+    container_name: synology-dashboard-backend-prod
     depends_on:
       - postgres
       - redis
     environment:
       NODE_ENV: production
+      DATABASE_URL: postgresql://dashboard:dashboard123@postgres:5432/synology_dashboard
+      REDIS_HOST: redis
+      REDIS_PORT: 6379
+      REDIS_URL: redis://redis:6379
+      JWT_SECRET: production-jwt-secret-key-32-chars
+      JWT_REFRESH_SECRET: production-refresh-secret-key-32-chars
+      ENCRYPTION_KEY: 0123456789abcdef0123456789abcdef
+      SESSION_SECRET: production-session-secret-key-32-chars
       PORT: 3003
     ports:
       - "3003:3003"
@@ -45,16 +51,13 @@ services:
     networks:
       - synology-network
 
-  nginx:
-    image: nginx:alpine
-    container_name: synology-dashboard-nginx-prod
+  frontend:
+    image: ghcr.io/egdongan/synology-frontend:latest
+    container_name: synology-dashboard-frontend-prod
     depends_on:
-      - app
+      - backend
     ports:
-      - "80:80"
-    volumes:
-      - ./nginx/nginx-prod.conf:/etc/nginx/nginx.conf:ro
-      - ./frontend/dist:/usr/share/nginx/html:ro
+      - "8082:80"
     restart: unless-stopped
     networks:
       - synology-network
