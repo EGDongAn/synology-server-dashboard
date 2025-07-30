@@ -38,12 +38,13 @@ services:
       NODE_ENV: production
       DATABASE_URL: postgresql://dashboard:dashboard123@postgres:5432/synology_dashboard
       REDIS_HOST: redis
-      REDIS_PORT: 6379
-      REDIS_URL: redis://redis:6379
+      CORS_ORIGIN: http://172.21.117.57:8082
       JWT_SECRET: production-jwt-secret-key-32-chars
       JWT_REFRESH_SECRET: production-refresh-secret-key-32-chars
       ENCRYPTION_KEY: 0123456789abcdef0123456789abcdef
       SESSION_SECRET: production-session-secret-key-32-chars
+      REDIS_PORT: 6379
+      REDIS_URL: redis://redis:6379
       PORT: 3003
     ports:
       - "3003:3003"

@@ -12,6 +12,12 @@ RUN npm ci
 # Copy source code
 COPY . .
 
+# Set build-time environment variables
+ARG VITE_API_URL=http://172.21.117.57:3003
+ARG VITE_WS_URL=ws://172.21.117.57:3003
+ENV VITE_API_URL=$VITE_API_URL
+ENV VITE_WS_URL=$VITE_WS_URL
+
 # Build the application
 RUN npm run build
 

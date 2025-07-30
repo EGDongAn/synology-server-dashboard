@@ -2,17 +2,17 @@ import api from '../api'
 
 export const authApi = {
   login: (email: string, password: string) => 
-    api.post('/api/v1/auth/login', { email, password }),
+    api.post('/auth/login', { email, password }),
   
   logout: () => 
-    api.post('/api/v1/auth/logout'),
+    api.post('/auth/logout'),
   
   refreshToken: (refreshToken: string) => 
-    api.post('/api/v1/auth/refresh', { refreshToken }),
+    api.post('/auth/refresh', { refreshToken }),
   
   getProfile: () => 
-    api.get('/api/v1/auth/profile'),
+    api.get('/auth/profile'),
   
   updateProfile: (data: any) => 
-    api.put('/api/v1/auth/profile', data),
+    api.put('/auth/profile', data),
 }
