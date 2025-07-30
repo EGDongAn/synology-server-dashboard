@@ -1,6 +1,6 @@
 import { Router } from 'express'
 import { DeploymentController } from '../controllers/deployment.controller'
-import { auth } from '../middleware/auth.middleware'
+import { authenticateToken as auth } from '../middleware/auth'
 import { validate } from '../middleware/validation.middleware'
 import { createDeploymentSchema, updateDeploymentSchema, rollbackSchema } from '../schemas/deployment.schemas'
 
