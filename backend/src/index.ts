@@ -9,8 +9,9 @@ import pino from 'pino'
 import { PrismaClient } from '@prisma/client'
 import Redis from 'ioredis'
 import routes from './routes'
-import { MonitoringService } from './services/monitoring.service' // Re-enabled with stub
-// import { MonitoringController } from './controllers/monitoring.controller' // Still disabled
+// Monitoring service completely removed to fix startup issues
+// import { MonitoringService } from './services/monitoring.service'
+// import { MonitoringController } from './controllers/monitoring.controller'
 import { NotificationService } from './services/notification.service'
 import { NotificationController } from './controllers/notification.controller'
 
@@ -71,8 +72,8 @@ app.get('/health', (_req, res) => {
 })
 
 // Initialize services
-// Temporarily disabled monitoring service due to dependency issues
-const monitoringService = new MonitoringService(io, redis)
+// Monitoring service completely removed to fix startup issues
+// const monitoringService = new MonitoringService(io, redis)
 const notificationService = new NotificationService(redis)
 
 // Set services for controllers
@@ -117,7 +118,7 @@ const gracefulShutdown = async () => {
   logger.info('Shutting down gracefully...')
   
   // Shutdown services
-  monitoringService.shutdown() // Re-enabled with stub
+  // monitoringService.shutdown() // Removed with monitoring service
   notificationService.shutdown()
   
   httpServer.close(() => {
