@@ -38,13 +38,8 @@ export class NotificationService {
   private templates: Map<string, NotificationTemplate> = new Map()
 
   constructor(redis: Redis) {
-    this.notificationQueue = new Bull('notifications', {
-      redis: {
-        port: redis.options.port,
-        host: redis.options.host,
-        password: redis.options.password
-      }
-    })
+    // Use Redis URL from environment instead of options
+    this.notificationQueue = new Bull('notifications', process.env.REDIS_URL || 'redis://localhost:6379')
 
     this.setupChannels()
     this.setupTemplates()
@@ -396,7 +391,7 @@ class EmailChannel implements NotificationChannel {
   private transporter: nodemailer.Transporter
 
   constructor() {
-    this.transporter = nodemailer.createTransporter({
+    this.transporter = nodemailer.createTransport({
       host: config.email.host,
       port: config.email.port,
       secure: config.email.port === 465,
